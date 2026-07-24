@@ -1,3 +1,5 @@
+import { supabase } from "./supabase";
+
 export type Condicion = "Nuevo" | "Con poco uso" | "En buen estado" | "Usado";
 export type Estado = "Disponible" | "Reservado" | "Vendido";
 export type Categoria =
@@ -31,6 +33,12 @@ export const ESTADOS: Estado[] = ["Disponible", "Reservado", "Vendido"];
 export const WHATSAPP_NUMBER = "5492996152272";
 export const WHATSAPP_DISPLAY = "+54 9 299 615-2272";
 
+// Las fotos viven en public/productos/<archivo> — url acá es la ruta relativa a ese archivo.
+export interface ProductoImagen {
+  url: string;
+  alt?: string;
+}
+
 export interface Producto {
   id: string;
   nombre: string;
@@ -44,119 +52,126 @@ export interface Producto {
   observaciones?: string;
   entrega?: string;
   ubicacion?: string;
-  imagenes: string[];
+  imagenes: ProductoImagen[];
   destacado: boolean;
   visible: boolean;
   fechaPublicacion: string;
-  swatch: string; // color css for placeholder
+  swatch?: string; // color css de respaldo cuando no hay foto
 }
 
-export const PRODUCTOS: Producto[] = [
-  {
-    id: "sillon-madera",
-    nombre: "Sillón de madera con almohadón",
-    categoria: "Muebles",
-    precio: 85000,
-    descripcion:
-      "Sillón individual en madera maciza, restaurado a mano. Almohadón en lino natural, muy cómodo. Ideal para un rincón de lectura.",
-    condicion: "Con poco uso",
-    estado: "Disponible",
-    cantidad: 1,
-    medidas: "70 × 75 × 90 cm",
-    observaciones: "Ligeras marcas de uso en apoyabrazos.",
-    entrega: "Retiro en zona céntrica o envío a coordinar.",
-    ubicacion: "Neuquén Capital",
-    imagenes: [],
-    destacado: true,
-    visible: true,
-    fechaPublicacion: "2025-07-15",
-    swatch: "oklch(0.72 0.06 45)",
-  },
-  {
-    id: "perfume-importado",
-    nombre: "Perfume importado 100 ml",
-    categoria: "Perfumes",
-    precio: 65000,
-    descripcion: "Fragancia amaderada, oriental. Frasco original con caja. Casi lleno.",
-    condicion: "Con poco uso",
-    estado: "Reservado",
-    cantidad: 1,
-    medidas: "100 ml",
-    entrega: "Retiro o envío por correo.",
-    ubicacion: "Neuquén Capital",
-    imagenes: [],
-    destacado: true,
-    visible: true,
-    fechaPublicacion: "2025-07-18",
-    swatch: "oklch(0.78 0.055 20)",
-  },
-  {
-    id: "guitarra-acustica",
-    nombre: "Guitarra acústica",
-    categoria: "Instrumentos musicales",
-    precio: 120000,
-    descripcion: "Guitarra acústica de estudio, sonido cálido. Incluye funda.",
-    condicion: "En buen estado",
-    estado: "Disponible",
-    cantidad: 1,
-    entrega: "Retiro únicamente.",
-    ubicacion: "Neuquén Capital",
-    imagenes: [],
-    destacado: true,
-    visible: true,
-    fechaPublicacion: "2025-07-20",
-    swatch: "oklch(0.55 0.08 45)",
-  },
-  {
-    id: "mesa-ratona",
-    nombre: "Mesa ratona redonda",
-    categoria: "Muebles",
-    precio: 45000,
-    descripcion: "Mesa ratona redonda de madera clara. Base metálica dorada envejecida.",
-    condicion: "En buen estado",
-    estado: "Disponible",
-    cantidad: 1,
-    medidas: "Ø 80 × 42 cm",
-    ubicacion: "Neuquén Capital",
-    imagenes: [],
-    destacado: false,
-    visible: true,
-    fechaPublicacion: "2025-07-10",
-    swatch: "oklch(0.82 0.04 78)",
-  },
-  {
-    id: "lampara-mesa",
-    nombre: "Lámpara de mesa",
-    categoria: "Decoración",
-    precio: 28000,
-    descripcion: "Lámpara de cerámica con pantalla de lino. Luz cálida.",
-    condicion: "Con poco uso",
-    estado: "Disponible",
-    cantidad: 1,
-    ubicacion: "Neuquén Capital",
-    imagenes: [],
-    destacado: false,
-    visible: true,
-    fechaPublicacion: "2025-07-05",
-    swatch: "oklch(0.72 0.045 145)",
-  },
-  {
-    id: "auriculares-bt",
-    nombre: "Auriculares Bluetooth",
-    categoria: "Tecnología",
-    precio: 42000,
-    descripcion: "Auriculares inalámbricos con estuche de carga.",
-    condicion: "Usado",
-    estado: "Vendido",
-    cantidad: 0,
-    ubicacion: "Neuquén Capital",
-    imagenes: [],
-    destacado: false,
-    visible: true,
-    fechaPublicacion: "2025-06-28",
-    swatch: "oklch(0.5 0.02 55)",
-  },
-];
+interface ProductoRow {
+  id: string;
+  nombre: string;
+  categoria: Categoria;
+  precio: number | string;
+  descripcion: string;
+  condicion: Condicion;
+  estado: Estado;
+  cantidad: number;
+  medidas: string | null;
+  observaciones: string | null;
+  entrega: string | null;
+  ubicacion: string | null;
+  imagenes: ProductoImagen[] | null;
+  destacado: boolean;
+  visible: boolean;
+  fecha_publicacion: string;
+  swatch: string | null;
+}
+
+const PRODUCTO_COLUMNS =
+  "id, nombre, categoria, precio, descripcion, condicion, estado, cantidad, medidas, observaciones, entrega, ubicacion, imagenes, destacado, visible, fecha_publicacion, swatch";
+
+function fromRow(row: ProductoRow): Producto {
+  return {
+    id: row.id,
+    nombre: row.nombre,
+    categoria: row.categoria,
+    precio: Number(row.precio),
+    descripcion: row.descripcion,
+    condicion: row.condicion,
+    estado: row.estado,
+    cantidad: row.cantidad,
+    medidas: row.medidas ?? undefined,
+    observaciones: row.observaciones ?? undefined,
+    entrega: row.entrega ?? undefined,
+    ubicacion: row.ubicacion ?? undefined,
+    imagenes: row.imagenes ?? [],
+    destacado: row.destacado,
+    visible: row.visible,
+    fechaPublicacion: row.fecha_publicacion,
+    swatch: row.swatch ?? undefined,
+  };
+}
+
+export async function fetchProductosVisibles(): Promise<Producto[]> {
+  const { data, error } = await supabase
+    .from("productos")
+    .select(PRODUCTO_COLUMNS)
+    .eq("visible", true)
+    .order("fecha_publicacion", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(fromRow);
+}
+
+export async function fetchProducto(id: string): Promise<Producto | null> {
+  const { data, error } = await supabase
+    .from("productos")
+    .select(PRODUCTO_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? fromRow(data) : null;
+}
+
+// Trae todos los productos (incluye no visibles). Requiere sesión de admin: la
+// policy RLS "lectura completa para admin" sólo deja pasar al rol authenticated.
+export async function fetchProductosAdmin(): Promise<Producto[]> {
+  const { data, error } = await supabase
+    .from("productos")
+    .select(PRODUCTO_COLUMNS)
+    .order("fecha_publicacion", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(fromRow);
+}
+
+export interface NuevoProductoInput {
+  nombre: string;
+  categoria: Categoria;
+  precio: number;
+  descripcion: string;
+  condicion: Condicion;
+  cantidad: number;
+  medidas?: string;
+  observaciones?: string;
+  entrega?: string;
+  ubicacion?: string;
+  imagenes: ProductoImagen[];
+  destacado: boolean;
+  visible: boolean;
+  fechaPublicacion: string;
+}
+
+export async function crearProducto(input: NuevoProductoInput): Promise<void> {
+  const { error } = await supabase.from("productos").insert({
+    nombre: input.nombre,
+    categoria: input.categoria,
+    precio: input.precio,
+    descripcion: input.descripcion,
+    condicion: input.condicion,
+    cantidad: input.cantidad,
+    medidas: input.medidas || null,
+    observaciones: input.observaciones || null,
+    entrega: input.entrega || null,
+    ubicacion: input.ubicacion || null,
+    imagenes: input.imagenes,
+    foto_url: input.imagenes[0]?.url ?? null,
+    destacado: input.destacado,
+    visible: input.visible,
+    fecha_publicacion: input.fechaPublicacion,
+  });
+  if (error) throw error;
+}
 
 export const formatPrice = (n: number) =>
   "$" + n.toLocaleString("es-AR", { maximumFractionDigits: 0 });
@@ -170,5 +185,3 @@ export const waComprar = (nombre: string, precio: number) =>
   `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
     `Hola, quiero comprar ${nombre}, publicado a ${formatPrice(precio)}. Quisiera coordinar el pago y la entrega.`,
   )}`;
-
-export const getProducto = (id: string) => PRODUCTOS.find((p) => p.id === id);

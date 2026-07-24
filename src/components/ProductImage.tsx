@@ -9,6 +9,17 @@ export function ProductImage({
   className?: string;
   large?: boolean;
 }) {
+  const foto = producto.imagenes[0];
+  if (foto) {
+    return (
+      <img
+        src={foto.url}
+        alt={foto.alt || producto.nombre}
+        className={`object-cover ${className}`}
+      />
+    );
+  }
+
   const initials = producto.nombre
     .split(" ")
     .slice(0, 2)

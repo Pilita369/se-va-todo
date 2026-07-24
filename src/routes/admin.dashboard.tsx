@@ -1,30 +1,43 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Logo } from "@/components/brand/Logo";
 import { Ornament } from "@/components/brand/Ornament";
 import { ProductImage } from "@/components/ProductImage";
-import { PRODUCTOS, formatPrice, type Producto } from "@/lib/products";
-import { Copy, Share2, Plus, Eye, Pencil, Trash2, Bookmark, CheckCircle2 } from "lucide-react";
+import { RequireAdmin } from "@/components/RequireAdmin";
+import { fetchProductosAdmin, formatPrice, type Producto } from "@/lib/products";
+import { signOut } from "@/lib/auth";
+import { Copy, Share2, Plus, Eye, Pencil, Trash2, Bookmark, CheckCircle2, LogOut } from "lucide-react";
 
 export const Route = createFileRoute("/admin/dashboard")({
   head: () => ({ meta: [{ title: "Panel — Se Va Todo" }, { name: "robots", content: "noindex" }] }),
-  component: Dashboard,
+  component: () => (
+    <RequireAdmin>
+      <Dashboard />
+    </RequireAdmin>
+  ),
 });
 
 function Dashboard() {
+  const navigate = useNavigate();
+  const { data: productos = [], isLoading } = useQuery({
+    queryKey: ["productos-admin"],
+    queryFn: fetchProductosAdmin,
+  });
+
   const stats = useMemo(() => {
-    const disponibles = PRODUCTOS.filter((p) => p.estado === "Disponible");
-    const reservados = PRODUCTOS.filter((p) => p.estado === "Reservado");
-    const vendidos = PRODUCTOS.filter((p) => p.estado === "Vendido");
+    const disponibles = productos.filter((p) => p.estado === "Disponible");
+    const reservados = productos.filter((p) => p.estado === "Reservado");
+    const vendidos = productos.filter((p) => p.estado === "Vendido");
     return {
-      publicados: PRODUCTOS.filter((p) => p.visible).length,
+      publicados: productos.filter((p) => p.visible).length,
       disponibles: disponibles.length,
       reservados: reservados.length,
       vendidos: vendidos.length,
       valorDisp: disponibles.reduce((s, p) => s + p.precio, 0),
       recaudado: vendidos.reduce((s, p) => s + p.precio, 0),
     };
-  }, []);
+  }, [productos]);
 
   const [copied, setCopied] = useState(false);
   const url = typeof window !== "undefined" ? window.location.origin : "https://sevatodo.app";
@@ -46,10 +59,19 @@ function Dashboard() {
               Panel privado
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Link to="/" className="text-sm text-[color:var(--warm-gray)] hover:text-[color:var(--chocolate)]">
               Ver sitio →
             </Link>
+            <button
+              onClick={async () => {
+                await signOut();
+                navigate({ to: "/admin" });
+              }}
+              className="flex items-center gap-1.5 text-sm text-[color:var(--warm-gray)] hover:text-[color:var(--chocolate)]"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Salir
+            </button>
           </div>
         </div>
       </header>
@@ -108,8 +130,17 @@ function Dashboard() {
 
         <Ornament label="Productos" />
 
+        {isLoading && (
+          <p className="py-10 text-center text-sm text-[color:var(--warm-gray)]">Cargando productos…</p>
+        )}
+        {!isLoading && productos.length === 0 && (
+          <p className="py-10 text-center text-sm text-[color:var(--warm-gray)]">
+            Todavía no agregaste ningún producto.
+          </p>
+        )}
+
         {/* Tabla desktop */}
-        <div className="card-ornate hidden overflow-hidden md:block">
+        <div className={`card-ornate hidden overflow-hidden md:block ${productos.length === 0 ? "hidden!" : ""}`}>
           <table className="w-full text-sm">
             <thead className="bg-[color:var(--sand)]/50 text-left text-[11px] uppercase tracking-widest text-[color:var(--gold)]">
               <tr>
@@ -123,7 +154,7 @@ function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {PRODUCTOS.map((p) => (
+              {productos.map((p) => (
                 <tr key={p.id} className="border-t border-[color:var(--border)]/60">
                   <td className="p-3">
                     <div className="flex items-center gap-3">
@@ -151,8 +182,8 @@ function Dashboard() {
         </div>
 
         {/* Cards mobile */}
-        <div className="grid gap-3 md:hidden">
-          {PRODUCTOS.map((p) => (
+        <div className={`grid gap-3 md:hidden ${productos.length === 0 ? "hidden!" : ""}`}>
+          {productos.map((p) => (
             <div key={p.id} className="card-ornate p-4">
               <div className="flex gap-3">
                 <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg">

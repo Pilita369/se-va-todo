@@ -7,13 +7,14 @@ import {
   CATEGORIAS,
   CONDICIONES,
   ESTADOS,
-  PRODUCTOS,
+  fetchProductosVisibles,
   type Categoria,
   type Condicion,
   type Estado,
 } from "@/lib/products";
 
 export const Route = createFileRoute("/")({
+  loader: () => fetchProductosVisibles(),
   head: () => ({
     meta: [
       { title: "Se Va Todo — Estamos haciendo lugar. Mirá antes de que se vaya." },
@@ -37,13 +38,14 @@ export const Route = createFileRoute("/")({
 type Orden = "recientes" | "precio-asc" | "precio-desc";
 
 function Home() {
+  const productos = Route.useLoaderData();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<Categoria | "Todas">("Todas");
   const [cond, setCond] = useState<Condicion | "Todas">("Todas");
   const [estado, setEstado] = useState<Estado | "Todos">("Todos");
   const [orden, setOrden] = useState<Orden>("recientes");
 
-  const visibles = useMemo(() => PRODUCTOS.filter((p) => p.visible), []);
+  const visibles = productos;
   const destacados = useMemo(
     () => visibles.filter((p) => p.destacado && p.estado !== "Vendido").slice(0, 3),
     [visibles],

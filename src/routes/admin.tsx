@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { Ornament } from "@/components/brand/Ornament";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Acceso privado — Se Va Todo" }, { name: "robots", content: "noindex" }] }),
@@ -10,6 +11,9 @@ export const Route = createFileRoute("/admin")({
 
 function AdminLogin() {
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
   return (
     <div className="grid min-h-screen place-items-center px-5 py-16">
       <div className="card-ornate w-full max-w-md p-8">
@@ -26,14 +30,27 @@ function AdminLogin() {
 
         <form
           className="mt-6 space-y-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            setError("La autenticación se conecta en el próximo paso (Lovable Cloud).");
+            setError(null);
+            setLoading(true);
+            const form = new FormData(e.currentTarget);
+            const { error } = await supabase.auth.signInWithPassword({
+              email: String(form.get("email")),
+              password: String(form.get("password")),
+            });
+            setLoading(false);
+            if (error) {
+              setError("Email o contraseña incorrectos.");
+              return;
+            }
+            navigate({ to: "/admin/dashboard" });
           }}
         >
           <div>
             <label className="text-xs uppercase tracking-widest text-[color:var(--gold)]">Email</label>
             <input
+              name="email"
               type="email"
               className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] px-4 py-2.5 outline-none focus:border-[color:var(--gold)]"
               placeholder="tu@email.com"
@@ -43,6 +60,7 @@ function AdminLogin() {
           <div>
             <label className="text-xs uppercase tracking-widest text-[color:var(--gold)]">Contraseña</label>
             <input
+              name="password"
               type="password"
               className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] px-4 py-2.5 outline-none focus:border-[color:var(--gold)]"
               placeholder="••••••••"
@@ -56,9 +74,10 @@ function AdminLogin() {
           )}
           <button
             type="submit"
-            className="w-full rounded-full bg-[color:var(--primary)] px-4 py-3 text-[color:var(--primary-foreground)] transition hover:opacity-90"
+            disabled={loading}
+            className="w-full rounded-full bg-[color:var(--primary)] px-4 py-3 text-[color:var(--primary-foreground)] transition hover:opacity-90 disabled:opacity-60"
           >
-            Entrar
+            {loading ? "Entrando…" : "Entrar"}
           </button>
         </form>
 

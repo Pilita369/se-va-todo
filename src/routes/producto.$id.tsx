@@ -2,11 +2,11 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { PublicLayout } from "@/components/PublicLayout";
 import { ProductImage } from "@/components/ProductImage";
 import { Ornament } from "@/components/brand/Ornament";
-import { formatPrice, getProducto, waComprar, waConsultar } from "@/lib/products";
+import { fetchProducto, formatPrice, waComprar, waConsultar } from "@/lib/products";
 
 export const Route = createFileRoute("/producto/$id")({
-  loader: ({ params }) => {
-    const p = getProducto(params.id);
+  loader: async ({ params }) => {
+    const p = await fetchProducto(params.id);
     if (!p) throw notFound();
     return { producto: p };
   },

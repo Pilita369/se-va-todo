@@ -20,6 +20,13 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Vercel
+.vercel/
+
+# npm lockfile — this project uses bun.lock; package-lock.json only appears
+# locally when bun isn't available (falls back to npm install for verification)
+package-lock.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
