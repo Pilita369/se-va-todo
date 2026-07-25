@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { Ornament } from "@/components/brand/Ornament";
 import { supabase } from "@/lib/supabase";
+import { usernameToEmail } from "@/lib/auth";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Acceso privado — Se Va Todo" }, { name: "robots", content: "noindex" }] }),
@@ -36,24 +37,26 @@ function AdminLogin() {
             setLoading(true);
             const form = new FormData(e.currentTarget);
             const { error } = await supabase.auth.signInWithPassword({
-              email: String(form.get("email")),
+              email: usernameToEmail(String(form.get("usuario"))),
               password: String(form.get("password")),
             });
             setLoading(false);
             if (error) {
-              setError("Email o contraseña incorrectos.");
+              setError("Usuario o contraseña incorrectos.");
               return;
             }
             navigate({ to: "/admin/dashboard" });
           }}
         >
           <div>
-            <label className="text-xs uppercase tracking-widest text-[color:var(--gold)]">Email</label>
+            <label className="text-xs uppercase tracking-widest text-[color:var(--gold)]">Usuario</label>
             <input
-              name="email"
-              type="email"
+              name="usuario"
+              type="text"
+              autoCapitalize="none"
+              autoCorrect="off"
               className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] px-4 py-2.5 outline-none focus:border-[color:var(--gold)]"
-              placeholder="tu@email.com"
+              placeholder="Pilar2026"
               required
             />
           </div>
