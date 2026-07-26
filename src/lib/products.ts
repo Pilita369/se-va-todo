@@ -152,8 +152,8 @@ export interface NuevoProductoInput {
   fechaPublicacion: string;
 }
 
-export async function crearProducto(input: NuevoProductoInput): Promise<void> {
-  const { error } = await supabase.from("productos").insert({
+function productoPayload(input: NuevoProductoInput) {
+  return {
     nombre: input.nombre,
     categoria: input.categoria,
     precio: input.precio,
@@ -169,19 +169,41 @@ export async function crearProducto(input: NuevoProductoInput): Promise<void> {
     destacado: input.destacado,
     visible: input.visible,
     fecha_publicacion: input.fechaPublicacion,
-  });
+  };
+}
+
+export async function crearProducto(input: NuevoProductoInput): Promise<void> {
+  const { error } = await supabase.from("productos").insert(productoPayload(input));
+  if (error) throw error;
+}
+
+export async function actualizarProducto(id: string, input: NuevoProductoInput): Promise<void> {
+  const { error } = await supabase.from("productos").update(productoPayload(input)).eq("id", id);
+  if (error) throw error;
+}
+
+export async function eliminarProducto(id: string): Promise<void> {
+  const { error } = await supabase.from("productos").delete().eq("id", id);
   if (error) throw error;
 }
 
 export const formatPrice = (n: number) =>
   "$" + n.toLocaleString("es-AR", { maximumFractionDigits: 0 });
 
-export const waConsultar = (nombre: string) =>
+// Dominio de respaldo para cuando estas funciones corren sin `window` (SSR).
+const SITE_URL = "https://se-va-todo.vercel.app";
+
+function productoUrl(id: string) {
+  const origin = typeof window !== "undefined" ? window.location.origin : SITE_URL;
+  return `${origin}/producto/${id}`;
+}
+
+export const waConsultar = (nombre: string, id: string) =>
   `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    `Hola, vi el producto ${nombre} en Se Va Todo. ¿Sigue disponible?`,
+    `Hola, vi el producto ${nombre} en Se Va Todo. ¿Sigue disponible? ${productoUrl(id)}`,
   )}`;
 
-export const waComprar = (nombre: string, precio: number) =>
+export const waComprar = (nombre: string, precio: number, id: string) =>
   `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    `Hola, quiero comprar ${nombre}, publicado a ${formatPrice(precio)}. Quisiera coordinar el pago y la entrega.`,
+    `Hola, quiero comprar ${nombre}, publicado a ${formatPrice(precio)}. Quisiera coordinar el pago y la entrega. ${productoUrl(id)}`,
   )}`;

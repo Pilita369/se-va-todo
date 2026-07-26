@@ -66,7 +66,7 @@ export function ProductCard({ p }: { p: Producto }) {
             Ver producto
           </Link>
           <a
-            href={vendido ? undefined : waConsultar(p.nombre)}
+            href={vendido ? undefined : waConsultar(p.nombre, p.id)}
             target="_blank"
             rel="noreferrer"
             aria-disabled={vendido}

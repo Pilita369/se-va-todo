@@ -114,7 +114,7 @@ function Detail() {
                 </p>
                 <div className="mt-3 flex flex-wrap gap-3">
                   <a
-                    href={waComprar(p.nombre, p.precio)}
+                    href={waComprar(p.nombre, p.precio, p.id)}
                     target="_blank"
                     rel="noreferrer"
                     className="flex-1 rounded-full bg-[color:var(--primary)] px-6 py-3 text-center text-[color:var(--primary-foreground)] transition hover:opacity-90"
@@ -122,7 +122,7 @@ function Detail() {
                     Quiero comprarlo
                   </a>
                   <a
-                    href={waConsultar(p.nombre)}
+                    href={waConsultar(p.nombre, p.id)}
                     target="_blank"
                     rel="noreferrer"
                     className="btn-gold-outline rounded-full px-6 py-3 text-sm"

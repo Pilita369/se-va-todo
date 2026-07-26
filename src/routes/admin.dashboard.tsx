@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Logo } from "@/components/brand/Logo";
 import { Ornament } from "@/components/brand/Ornament";
 import { ProductImage } from "@/components/ProductImage";
 import { RequireAdmin } from "@/components/RequireAdmin";
-import { fetchProductosAdmin, formatPrice, type Producto } from "@/lib/products";
+import { eliminarProducto, fetchProductosAdmin, formatPrice, type Producto } from "@/lib/products";
 import { signOut } from "@/lib/auth";
 import { Copy, Share2, Plus, Eye, Pencil, Trash2, Bookmark, CheckCircle2, LogOut } from "lucide-react";
 
@@ -40,7 +40,7 @@ function Dashboard() {
   }, [productos]);
 
   const [copied, setCopied] = useState(false);
-  const url = typeof window !== "undefined" ? window.location.origin : "https://sevatodo.app";
+  const url = typeof window !== "undefined" ? window.location.origin : "https://se-va-todo.vercel.app";
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(url);
@@ -247,9 +247,31 @@ function EstadoTag({ e }: { e: Producto["estado"] }) {
 }
 
 function RowActions({ p }: { p: Producto }) {
+  const queryClient = useQueryClient();
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!window.confirm(`¿Eliminar "${p.nombre}"? Esta acción no se puede deshacer.`)) return;
+    setDeleting(true);
+    try {
+      await eliminarProducto(p.id);
+      await queryClient.invalidateQueries({ queryKey: ["productos-admin"] });
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "No se pudo eliminar el producto.");
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="flex flex-wrap justify-end gap-1.5">
-      <IconBtn title="Editar"><Pencil className="h-3.5 w-3.5" /></IconBtn>
+      <Link
+        to="/admin/productos/$id/editar"
+        params={{ id: p.id }}
+        className="rounded-full border border-[color:var(--border)] p-1.5 text-[color:var(--warm-gray)] hover:bg-[color:var(--muted)]"
+        title="Editar"
+      >
+        <Pencil className="h-3.5 w-3.5" />
+      </Link>
       <Link
         to="/producto/$id"
         params={{ id: p.id }}
@@ -260,7 +282,9 @@ function RowActions({ p }: { p: Producto }) {
       </Link>
       <IconBtn title="Reservar"><Bookmark className="h-3.5 w-3.5" /></IconBtn>
       <IconBtn title="Marcar como vendido"><CheckCircle2 className="h-3.5 w-3.5" /></IconBtn>
-      <IconBtn title="Eliminar" danger><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+      <IconBtn title="Eliminar" danger disabled={deleting} onClick={handleDelete}>
+        <Trash2 className="h-3.5 w-3.5" />
+      </IconBtn>
     </div>
   );
 }
@@ -269,15 +293,22 @@ function IconBtn({
   children,
   title,
   danger,
+  disabled,
+  onClick,
 }: {
   children: React.ReactNode;
   title: string;
   danger?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <button
+      type="button"
       title={title}
-      className={`rounded-full border p-1.5 transition ${
+      disabled={disabled}
+      onClick={onClick}
+      className={`rounded-full border p-1.5 transition disabled:opacity-50 ${
         danger
           ? "border-[color:var(--terracotta)]/50 text-[color:var(--terracotta)] hover:bg-[color:var(--terracotta)]/10"
           : "border-[color:var(--border)] text-[color:var(--warm-gray)] hover:bg-[color:var(--muted)]"
