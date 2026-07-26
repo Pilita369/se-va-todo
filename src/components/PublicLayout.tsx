@@ -12,7 +12,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <Link
               to="/admin"
               aria-label="Acceso privado"
-              className="shrink-0 text-[9px] text-[color:var(--warm-gray)]/30 hover:text-[color:var(--gold)]"
+              className="shrink-0 rounded-full p-1.5 text-sm leading-none text-[color:var(--warm-gray)]/60 hover:text-[color:var(--gold)]"
             >
               •
             </Link>
