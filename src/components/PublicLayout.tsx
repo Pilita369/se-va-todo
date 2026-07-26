@@ -8,7 +8,16 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 border-b border-[color:var(--border)]/70 bg-[color:var(--background)]/85 backdrop-blur">
         <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-4">
-          <Logo />
+          <div className="flex min-w-0 items-center gap-2">
+            <Link
+              to="/admin"
+              aria-label="Acceso privado"
+              className="shrink-0 text-[9px] text-[color:var(--warm-gray)]/30 hover:text-[color:var(--gold)]"
+            >
+              •
+            </Link>
+            <Logo />
+          </div>
           <nav className="flex items-center gap-2 text-sm">
             <Link
               to="/"

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PublicLayout } from "@/components/PublicLayout";
 import { ProductCard } from "@/components/ProductCard";
@@ -172,15 +172,6 @@ function Home() {
             ))}
           </div>
         )}
-
-        <div className="mt-14 text-center">
-          <Link
-            to="/admin"
-            className="text-[11px] uppercase tracking-widest text-[color:var(--warm-gray)]/60 hover:text-[color:var(--chocolate)]"
-          >
-            · Acceso privado ·
-          </Link>
-        </div>
       </section>
     </PublicLayout>
   );

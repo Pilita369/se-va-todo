@@ -5,7 +5,7 @@ import { Ornament } from "@/components/brand/Ornament";
 import { supabase } from "@/lib/supabase";
 import { usernameToEmail } from "@/lib/auth";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/admin/")({
   head: () => ({ meta: [{ title: "Acceso privado — Se Va Todo" }, { name: "robots", content: "noindex" }] }),
   component: AdminLogin,
 });
