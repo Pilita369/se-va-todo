@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Logo } from "./brand/Logo";
-import { WHATSAPP_DISPLAY, WHATSAPP_NUMBER } from "@/lib/products";
+import { WHATSAPP_NUMBER } from "@/lib/products";
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   return (
@@ -19,12 +19,6 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <Logo />
           </div>
           <nav className="flex items-center gap-2 text-sm">
-            <Link
-              to="/"
-              className="hidden rounded-full px-3 py-1.5 text-[color:var(--chocolate)] hover:bg-[color:var(--muted)] sm:inline-block"
-            >
-              Catálogo
-            </Link>
             <a
               href={`https://wa.me/${WHATSAPP_NUMBER}`}
               target="_blank"
@@ -48,14 +42,18 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </p>
           </div>
           <div className="text-sm">
-            <div className="mb-2 font-serif text-lg text-[color:var(--chocolate)]">Consultas</div>
+            <div className="mb-2 font-serif text-lg text-[color:var(--chocolate)]">Retiro y envío</div>
+            <p className="text-[color:var(--warm-gray)]">
+              Retirás en Neuquén Capital o lo coordinamos por envío — la tarifa depende de la zona y la
+              distancia.
+            </p>
             <a
               href={`https://wa.me/${WHATSAPP_NUMBER}`}
-              className="text-[color:var(--chocolate)] underline decoration-[color:var(--gold)] underline-offset-4"
+              className="mt-2 inline-block text-[color:var(--chocolate)] underline decoration-[color:var(--gold)] underline-offset-4"
               target="_blank"
               rel="noreferrer"
             >
-              WhatsApp {WHATSAPP_DISPLAY}
+              Consultar por WhatsApp
             </a>
           </div>
           <div className="text-sm text-[color:var(--warm-gray)]">

@@ -35,15 +35,12 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-type Orden = "recientes" | "precio-asc" | "precio-desc";
-
 function Home() {
   const productos = Route.useLoaderData();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<Categoria | "Todas">("Todas");
   const [cond, setCond] = useState<Condicion | "Todas">("Todas");
   const [estado, setEstado] = useState<Estado | "Todos">("Todos");
-  const [orden, setOrden] = useState<Orden>("recientes");
 
   const visibles = productos;
   const destacados = useMemo(
@@ -59,14 +56,11 @@ function Home() {
       if (estado !== "Todos" && p.estado !== estado) return false;
       return true;
     });
-    if (orden === "precio-asc") list = [...list].sort((a, b) => a.precio - b.precio);
-    if (orden === "precio-desc") list = [...list].sort((a, b) => b.precio - a.precio);
-    if (orden === "recientes")
-      list = [...list].sort((a, b) => b.fechaPublicacion.localeCompare(a.fechaPublicacion));
+    list = [...list].sort((a, b) => b.fechaPublicacion.localeCompare(a.fechaPublicacion));
     // vendidos al final
     list = [...list].sort((a, b) => Number(a.estado === "Vendido") - Number(b.estado === "Vendido"));
     return list;
-  }, [visibles, q, cat, cond, estado, orden]);
+  }, [visibles, q, cat, cond, estado]);
 
   return (
     <PublicLayout>
@@ -119,6 +113,11 @@ function Home() {
               <div className="absolute bottom-0 left-8 h-2/5 w-3/5 rotate-[-1deg] rounded-2xl border border-[color:var(--gold)]/50 bg-[color:var(--sand)] p-2 shadow-lg">
                 <div className="h-full w-full rounded-xl" style={{ background: destacados[2]?.swatch ?? "var(--terracotta)" }} />
               </div>
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <span className="rotate-[-8deg] rounded-full border-2 border-[color:var(--terracotta)] bg-[color:var(--ivory)]/95 px-5 py-2 font-serif text-lg italic text-[color:var(--terracotta)] shadow-md">
+                  Venta de garage
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -140,7 +139,7 @@ function Home() {
       <section id="catalogo" className="mx-auto max-w-6xl px-5 py-10">
         <Ornament label="Entrá a ver qué queda" />
 
-        <div className="card-ornate mb-8 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="card-ornate mb-8 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -150,15 +149,6 @@ function Home() {
           <Select value={cat} onChange={(v) => setCat(v as Categoria | "Todas")} options={["Todas", ...CATEGORIAS]} />
           <Select value={cond} onChange={(v) => setCond(v as Condicion | "Todas")} options={["Todas", ...CONDICIONES]} />
           <Select value={estado} onChange={(v) => setEstado(v as Estado | "Todos")} options={["Todos", ...ESTADOS]} />
-          <Select
-            value={orden}
-            onChange={(v) => setOrden(v as Orden)}
-            options={[
-              { value: "recientes", label: "Más recientes" },
-              { value: "precio-asc", label: "Precio ↑" },
-              { value: "precio-desc", label: "Precio ↓" },
-            ]}
-          />
         </div>
 
         {filtrados.length === 0 ? (
