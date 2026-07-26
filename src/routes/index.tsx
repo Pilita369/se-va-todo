@@ -104,20 +104,11 @@ function Home() {
 
             {/* Composición editorial */}
             <div className="relative hidden aspect-[5/6] md:block">
-              <div className="absolute left-0 top-6 h-3/5 w-1/2 rotate-[-3deg] rounded-2xl border border-[color:var(--gold)]/50 bg-[color:var(--sand)] p-2 shadow-lg">
-                <div className="h-full w-full rounded-xl" style={{ background: destacados[0]?.swatch ?? "var(--sage)" }} />
-              </div>
-              <div className="absolute right-0 top-0 h-2/3 w-3/5 rotate-[4deg] rounded-2xl border border-[color:var(--gold)]/50 bg-[color:var(--sand)] p-2 shadow-lg">
-                <div className="h-full w-full rounded-xl" style={{ background: destacados[1]?.swatch ?? "var(--rose-old)" }} />
-              </div>
-              <div className="absolute bottom-0 left-8 h-2/5 w-3/5 rotate-[-1deg] rounded-2xl border border-[color:var(--gold)]/50 bg-[color:var(--sand)] p-2 shadow-lg">
-                <div className="h-full w-full rounded-xl" style={{ background: destacados[2]?.swatch ?? "var(--terracotta)" }} />
-              </div>
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <span className="rotate-[-8deg] rounded-full border-2 border-[color:var(--terracotta)] bg-[color:var(--ivory)]/95 px-5 py-2 font-serif text-lg italic text-[color:var(--terracotta)] shadow-md">
-                  Venta de garage
-                </span>
-              </div>
+              <img
+                src="/hero.png"
+                alt="Selección de objetos en venta: decoración, muebles y más"
+                className="h-full w-full object-contain"
+              />
             </div>
           </div>
         </div>
