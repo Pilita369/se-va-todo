@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { X } from "lucide-react";
 import {
   CATEGORIAS,
   CONDICIONES,
@@ -17,7 +18,33 @@ export function ProductoForm({ producto }: { producto?: Producto }) {
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [imagenes, setImagenes] = useState<ProductoImagen[]>(producto?.imagenes ?? []);
+  const [nombreExistente, setNombreExistente] = useState("");
   const editando = !!producto;
+
+  const agregarArchivo = async (file: File) => {
+    setError(null);
+    setStatus("Subiendo foto…");
+    try {
+      const url = await subirImagenProducto(file);
+      setImagenes((imgs) => [...imgs, { url }]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo subir la foto.");
+    } finally {
+      setStatus(null);
+    }
+  };
+
+  const agregarExistente = () => {
+    const nombre = nombreExistente.trim();
+    if (!nombre) return;
+    setImagenes((imgs) => [...imgs, { url: `/productos/${nombre}` }]);
+    setNombreExistente("");
+  };
+
+  const quitarImagen = (i: number) => {
+    setImagenes((imgs) => imgs.filter((_, idx) => idx !== i));
+  };
 
   return (
     <form
@@ -26,38 +53,8 @@ export function ProductoForm({ producto }: { producto?: Producto }) {
         e.preventDefault();
         setError(null);
         const form = new FormData(e.currentTarget);
-        const imagenAlt = String(form.get("imagenAlt") || "").trim();
-        const archivoPrincipal = form.get("imagenPrincipal");
-        const nombrePrincipalExistente = String(form.get("imagenPrincipalExistente") || "").trim();
-        const archivosAdicionales = form
-          .getAll("imagenesAdicionales")
-          .filter((f): f is File => f instanceof File && f.size > 0);
-        const nombresAdicionalesExistentes = String(form.get("imagenesAdicionalesExistentes") || "")
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
-
         setSaving(true);
         try {
-          const nuevasImagenes: ProductoImagen[] = [];
-          if (archivoPrincipal instanceof File && archivoPrincipal.size > 0) {
-            setStatus("Subiendo foto principal…");
-            const url = await subirImagenProducto(archivoPrincipal);
-            nuevasImagenes.push({ url, alt: imagenAlt || undefined });
-          } else if (nombrePrincipalExistente) {
-            nuevasImagenes.push({ url: `/productos/${nombrePrincipalExistente}`, alt: imagenAlt || undefined });
-          }
-          for (const [i, archivo] of archivosAdicionales.entries()) {
-            setStatus(`Subiendo foto adicional ${i + 1} de ${archivosAdicionales.length}…`);
-            const url = await subirImagenProducto(archivo);
-            nuevasImagenes.push({ url });
-          }
-          for (const nombre of nombresAdicionalesExistentes) {
-            nuevasImagenes.push({ url: `/productos/${nombre}` });
-          }
-          // En edición, si no se tocaron los campos de fotos, mantenemos las que ya tenía.
-          const imagenes = nuevasImagenes.length > 0 ? nuevasImagenes : (producto?.imagenes ?? []);
-
           setStatus(editando ? "Guardando cambios…" : "Guardando producto…");
           const input = {
             nombre: String(form.get("nombre")),
@@ -139,37 +136,65 @@ export function ProductoForm({ producto }: { producto?: Producto }) {
         <textarea name="observaciones" rows={2} defaultValue={producto?.observaciones} className={input} placeholder="Notas adicionales…" />
       </Field>
 
-      <div className="rounded-xl border border-dashed border-[color:var(--gold)]/50 p-4 space-y-5">
-        {editando && producto.imagenes.length > 0 && (
-          <p className="text-xs text-[color:var(--warm-gray)]">
-            Ya tiene {producto.imagenes.length} foto(s) cargada(s). Dejá los campos de abajo vacíos para
-            mantenerlas, o completá alguno para reemplazarlas todas.
-          </p>
-        )}
-        <div>
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Foto principal (subir desde el celu o la compu)">
-              <input name="imagenPrincipal" type="file" accept="image/*" className={input} />
-            </Field>
-            <Field label="Descripción de la foto (alt)">
-              <input name="imagenAlt" defaultValue={producto?.imagenes[0]?.alt} className={input} placeholder="Sillón de madera visto de frente" />
-            </Field>
-          </div>
-          <div className="mt-2">
-            <Field label="…o ya está en public/productos/, escribí el nombre">
-              <input name="imagenPrincipalExistente" className={input} placeholder="1.png" />
-            </Field>
-          </div>
-        </div>
+      <div className="rounded-xl border border-dashed border-[color:var(--gold)]/50 p-4 space-y-4">
+        <span className="text-[11px] uppercase tracking-widest text-[color:var(--gold)]">Fotos</span>
 
-        <div>
-          <Field label="Fotos adicionales (subir varias)">
-            <input name="imagenesAdicionales" type="file" accept="image/*" multiple className={input} />
+        {imagenes.length > 0 && (
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+            {imagenes.map((img, i) => (
+              <div
+                key={`${img.url}-${i}`}
+                className="relative aspect-square overflow-hidden rounded-lg border border-[color:var(--border)] bg-[color:var(--muted)]"
+              >
+                <img src={img.url} alt={img.alt || ""} className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => quitarImagen(i)}
+                  title="Quitar foto"
+                  className="absolute right-1 top-1 rounded-full bg-[color:var(--chocolate)]/80 p-1 text-white hover:bg-[color:var(--terracotta)]"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Subir foto nueva (celu o compu)">
+            <input
+              type="file"
+              accept="image/*"
+              className={input}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) agregarArchivo(file);
+                e.target.value = "";
+              }}
+            />
           </Field>
-          <div className="mt-2">
-            <Field label="…o nombres ya en public/productos/, separados por coma">
-              <input name="imagenesAdicionalesExistentes" className={input} placeholder="2.png, 3.png" />
+          <div className="flex items-end gap-2">
+            <Field label="…o nombre ya en public/productos/">
+              <input
+                value={nombreExistente}
+                onChange={(e) => setNombreExistente(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    agregarExistente();
+                  }
+                }}
+                className={input}
+                placeholder="1.png"
+              />
             </Field>
+            <button
+              type="button"
+              onClick={agregarExistente}
+              className="btn-gold-outline shrink-0 rounded-full px-4 py-2.5 text-sm"
+            >
+              Agregar
+            </button>
           </div>
         </div>
       </div>
