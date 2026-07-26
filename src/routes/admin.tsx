@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { Ornament } from "@/components/brand/Ornament";
@@ -13,7 +13,6 @@ export const Route = createFileRoute("/admin")({
 function AdminLogin() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   return (
     <div className="grid min-h-screen place-items-center px-5 py-16">
@@ -36,16 +35,19 @@ function AdminLogin() {
             setError(null);
             setLoading(true);
             const form = new FormData(e.currentTarget);
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
               email: usernameToEmail(String(form.get("usuario"))),
               password: String(form.get("password")),
             });
-            setLoading(false);
-            if (error) {
+            if (error || !data.session) {
+              setLoading(false);
               setError("Usuario o contraseña incorrectos.");
               return;
             }
-            navigate({ to: "/admin/dashboard" });
+            // Navegación dura (no client-side) a propósito: así la carga de
+            // /admin/dashboard arranca de cero y lee la sesión ya persistida
+            // en localStorage, sin depender del timing del router en SPA.
+            window.location.assign("/admin/dashboard");
           }}
         >
           <div>
