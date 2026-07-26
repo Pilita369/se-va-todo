@@ -38,7 +38,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           <div>
             <Logo />
             <p className="mt-3 max-w-xs text-sm text-[color:var(--warm-gray)]">
-              Una selección privada de objetos que buscan un nuevo lugar.
+              Venta privada de objetos que buscan un nuevo lugar.
             </p>
           </div>
           <div className="text-sm">

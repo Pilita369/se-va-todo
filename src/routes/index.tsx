@@ -26,7 +26,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Se Va Todo — Venta privada" },
       {
         property: "og:description",
-        content: "Una selección privada de objetos que buscan un nuevo lugar.",
+        content: "Venta privada de objetos que buscan un nuevo lugar.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
