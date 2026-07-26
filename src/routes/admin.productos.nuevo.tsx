@@ -11,6 +11,7 @@ import {
   type Condicion,
   type ProductoImagen,
 } from "@/lib/products";
+import { subirImagenProducto } from "@/lib/storage";
 
 export const Route = createFileRoute("/admin/productos/nuevo")({
   head: () => ({ meta: [{ title: "Nuevo producto — Se Va Todo" }, { name: "robots", content: "noindex" }] }),
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/admin/productos/nuevo")({
 function Nuevo() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   return (
@@ -48,23 +50,37 @@ function Nuevo() {
             e.preventDefault();
             setError(null);
             const form = new FormData(e.currentTarget);
-            const imagenPrincipal = String(form.get("imagenPrincipal") || "").trim();
             const imagenAlt = String(form.get("imagenAlt") || "").trim();
-            const imagenesAdicionales = String(form.get("imagenesAdicionales") || "")
+            const archivoPrincipal = form.get("imagenPrincipal");
+            const nombrePrincipalExistente = String(form.get("imagenPrincipalExistente") || "").trim();
+            const archivosAdicionales = form
+              .getAll("imagenesAdicionales")
+              .filter((f): f is File => f instanceof File && f.size > 0);
+            const nombresAdicionalesExistentes = String(form.get("imagenesAdicionalesExistentes") || "")
               .split(",")
               .map((s) => s.trim())
               .filter(Boolean);
 
-            const imagenes: ProductoImagen[] = [];
-            if (imagenPrincipal) {
-              imagenes.push({ url: `/productos/${imagenPrincipal}`, alt: imagenAlt || undefined });
-            }
-            for (const archivo of imagenesAdicionales) {
-              imagenes.push({ url: `/productos/${archivo}` });
-            }
-
             setSaving(true);
             try {
+              const imagenes: ProductoImagen[] = [];
+              if (archivoPrincipal instanceof File && archivoPrincipal.size > 0) {
+                setStatus("Subiendo foto principal…");
+                const url = await subirImagenProducto(archivoPrincipal);
+                imagenes.push({ url, alt: imagenAlt || undefined });
+              } else if (nombrePrincipalExistente) {
+                imagenes.push({ url: `/productos/${nombrePrincipalExistente}`, alt: imagenAlt || undefined });
+              }
+              for (const [i, archivo] of archivosAdicionales.entries()) {
+                setStatus(`Subiendo foto adicional ${i + 1} de ${archivosAdicionales.length}…`);
+                const url = await subirImagenProducto(archivo);
+                imagenes.push({ url });
+              }
+              for (const nombre of nombresAdicionalesExistentes) {
+                imagenes.push({ url: `/productos/${nombre}` });
+              }
+
+              setStatus("Guardando producto…");
               await crearProducto({
                 nombre: String(form.get("nombre")),
                 categoria: form.get("categoria") as Categoria,
@@ -86,6 +102,7 @@ function Nuevo() {
               setError(err instanceof Error ? err.message : "No se pudo guardar el producto.");
             } finally {
               setSaving(false);
+              setStatus(null);
             }
           }}
         >
@@ -133,23 +150,32 @@ function Nuevo() {
             <textarea name="observaciones" rows={2} className={input} placeholder="Notas adicionales…" />
           </Field>
 
-          <div className="rounded-xl border border-dashed border-[color:var(--gold)]/50 p-4">
-            <p className="text-xs text-[color:var(--warm-gray)]">
-              Copiá los archivos de foto a la carpeta <code>public/productos/</code> del repo y escribí acá el
-              nombre del archivo (ej: <code>sillon-madera-1.jpg</code>). Todavía no se suben desde este formulario.
-            </p>
-            <div className="mt-4 grid gap-5 sm:grid-cols-2">
-              <Field label="Archivo de imagen principal">
-                <input name="imagenPrincipal" className={input} placeholder="sillon-madera-1.jpg" />
-              </Field>
-              <Field label="Descripción de la imagen (alt)">
-                <input name="imagenAlt" className={input} placeholder="Sillón de madera visto de frente" />
-              </Field>
+          <div className="rounded-xl border border-dashed border-[color:var(--gold)]/50 p-4 space-y-5">
+            <div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field label="Foto principal (subir desde el celu o la compu)">
+                  <input name="imagenPrincipal" type="file" accept="image/*" className={input} />
+                </Field>
+                <Field label="Descripción de la foto (alt)">
+                  <input name="imagenAlt" className={input} placeholder="Sillón de madera visto de frente" />
+                </Field>
+              </div>
+              <div className="mt-2">
+                <Field label="…o ya está en public/productos/, escribí el nombre">
+                  <input name="imagenPrincipalExistente" className={input} placeholder="1.png" />
+                </Field>
+              </div>
             </div>
-            <div className="mt-5">
-              <Field label="Archivos de imágenes adicionales (separados por coma)">
-                <input name="imagenesAdicionales" className={input} placeholder="sillon-madera-2.jpg, sillon-madera-3.jpg" />
+
+            <div>
+              <Field label="Fotos adicionales (subir varias)">
+                <input name="imagenesAdicionales" type="file" accept="image/*" multiple className={input} />
               </Field>
+              <div className="mt-2">
+                <Field label="…o nombres ya en public/productos/, separados por coma">
+                  <input name="imagenesAdicionalesExistentes" className={input} placeholder="2.png, 3.png" />
+                </Field>
+              </div>
             </div>
           </div>
 
@@ -171,6 +197,9 @@ function Nuevo() {
             <p className="rounded-lg border border-[color:var(--terracotta)]/50 bg-[color:var(--terracotta)]/10 p-3 text-sm text-[color:var(--chocolate)]">
               {error}
             </p>
+          )}
+          {status && (
+            <p className="text-sm text-[color:var(--warm-gray)]">{status}</p>
           )}
 
           <div className="mt-3 flex flex-wrap justify-end gap-3">
