@@ -107,7 +107,7 @@ function Home() {
               <img
                 src="/hero.png"
                 alt="Selección de objetos en venta: decoración, muebles y más"
-                className="h-full w-full object-contain"
+                className="h-full w-full object-cover"
               />
             </div>
           </div>
