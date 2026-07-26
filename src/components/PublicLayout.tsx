@@ -62,7 +62,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="border-t border-[color:var(--border)]/60 py-4 text-center text-xs text-[color:var(--warm-gray)]">
-          © {new Date().getFullYear()} Se Va Todo
+          © {new Date().getFullYear()} Se Va Todo · Desarrollado por Digitanea
         </div>
       </footer>
     </div>
